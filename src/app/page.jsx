@@ -6,6 +6,7 @@ import {
   addDoc,
   getDocs,
   deleteDoc,
+  updateDoc,
   doc,
 } from "firebase/firestore";
 import { useState, useEffect } from "react";
@@ -14,6 +15,7 @@ const dbInstance = collection(database, "products");
 
 const Home = () => {
   const [visible, setVisible] = useState(false);
+  const [curentUpdateId, setCurentUpdateId] = useState(null);
   const [products, setProducts] = useState([]);
 
   useEffect(() => {
@@ -52,8 +54,29 @@ const Home = () => {
   };
 
   const updateProduct = async (dbInstance, id) => {
-    console.log("id :>> ", id);
-    await updateDoc(doc(dbInstance, id));
+    const name = document.getElementById("name").value;
+    const quantity = document.getElementById("quantity").value;
+    const price = document.getElementById("price").value;
+
+    await updateDoc(doc(dbInstance, id), {
+      name,
+      quantity,
+      price,
+    }).then((docRef) => {
+      setProducts(
+        products.map((product) => {
+          if (product.id === id) {
+            return {
+              ...product,
+              name,
+              quantity,
+              price,
+            };
+          }
+          return product;
+        })
+      );
+    });
   };
 
   return (
@@ -86,7 +109,10 @@ const Home = () => {
                 <span className="w-max flex">
                   <button
                     className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-1"
-                    onClick={() => updateProduct(dbInstance, product.id)}
+                    onClick={() => {
+                      setCurentUpdateId(product.id);
+                      setVisible(true);
+                    }}
                   >
                     Modifier
                   </button>
@@ -114,7 +140,10 @@ const Home = () => {
           <button
             className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
             type="button"
-            onClick={() => setVisible(false)}
+            onClick={() => {
+              setVisible(false);
+              setCurentUpdateId(null);
+            }}
           >
             Annuler
           </button>
@@ -136,6 +165,10 @@ const Home = () => {
                 id="name"
                 type="text"
                 placeholder="Nom"
+                defaultValue={
+                  curentUpdateId &&
+                  products.find((product) => product.id === curentUpdateId).name
+                }
               />
             </div>
             <div className="mb-4">
@@ -150,6 +183,11 @@ const Home = () => {
                 id="quantity"
                 type="number"
                 placeholder="Quantité"
+                defaultValue={
+                  curentUpdateId &&
+                  products.find((product) => product.id === curentUpdateId)
+                    .quantity
+                }
               />
             </div>
             <div className="mb-4">
@@ -164,18 +202,31 @@ const Home = () => {
                 id="price"
                 type="number"
                 placeholder="Prix"
+                defaultValue={
+                  curentUpdateId &&
+                  products.find((product) => product.id === curentUpdateId)
+                    .price
+                }
               />
             </div>
             <div className="flex items-center justify-center">
               <button
-                className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mr-1"
+                className={`${
+                  curentUpdateId
+                    ? "bg-blue-500 hover:bg-blue-700"
+                    : "bg-green-500 hover:bg-green-700"
+                } text-white font-bold py-2 px-4 rounded mr-1`}
                 type="submit"
                 onClick={(e) => {
                   e.preventDefault();
-                  addProduct();
+                  curentUpdateId
+                    ? updateProduct(dbInstance, curentUpdateId)
+                    : addProduct(); // TODO: check if update
+                  curentUpdateId && setCurentUpdateId(null);
+                  setVisible(false);
                 }}
               >
-                Ajouter
+                {curentUpdateId ? "Modifier" : "Ajouter"}
               </button>
             </div>
           </form>
