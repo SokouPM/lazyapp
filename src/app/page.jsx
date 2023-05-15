@@ -1,13 +1,7 @@
 "use client";
 
 import { app, database } from "../../firebaseConfig";
-import {
-  collection,
-  addDoc,
-  getDocs,
-  deleteDoc,
-  doc,
-} from "firebase/firestore";
+import { collection, addDoc, getDocs, deleteDoc, doc } from "firebase/firestore";
 import { useState, useEffect } from "react";
 
 const dbInstance = collection(database, "products");
@@ -47,6 +41,7 @@ const updateProduct = async (dbInstance, id) => {
 
 export default function Home() {
   const [visible, setVisible] = useState(false);
+  const [curentUpdateId, setCurentUpdateId] = useState(null);
   const [products, setProducts] = useState([]);
 
   useEffect(() => {
@@ -55,9 +50,7 @@ export default function Home() {
 
   return (
     <main>
-      <h1 className="text-6xl font-bold text-center mb-14">
-        Gestion de vos stock
-      </h1>
+      <h1 className="text-6xl font-bold text-center mb-14">Gestion de vos stock</h1>
       <table className="w-5/6 mx-auto mb-4">
         <thead>
           <tr>
@@ -70,18 +63,18 @@ export default function Home() {
         <tbody>
           {products.map((product) => (
             <tr key={product.id}>
-              <td className="border border-black text-center">
-                {product.name}
-              </td>
-              <td className="border border-black text-center">
-                {product.quantity}
-              </td>
-              <td className="border border-black text-center">
-                {product.price}
-              </td>
+              <td className="border border-black text-center">{product.name}</td>
+              <td className="border border-black text-center">{product.quantity}</td>
+              <td className="border border-black text-center">{product.price}</td>
               <td className="border border-black">
                 <span className="w-max flex">
-                  <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-1">
+                  <button
+                    className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-1"
+                    onClick={() => {
+                      setCurentUpdateId(product.id);
+                      setVisible(true);
+                    }}
+                  >
                     Modifier
                   </button>
                   <button
@@ -98,17 +91,17 @@ export default function Home() {
       </table>
       <div className="mx-auto w-min">
         {!visible ? (
-          <button
-            className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
-            onClick={() => setVisible(true)}
-          >
+          <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded" onClick={() => setVisible(true)}>
             Ajouter
           </button>
         ) : (
           <button
             className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
             type="button"
-            onClick={() => setVisible(false)}
+            onClick={() => {
+              setVisible(false);
+              setCurentUpdateId(null);
+            }}
           >
             Annuler
           </button>
@@ -119,10 +112,7 @@ export default function Home() {
         <div className="w-1/2 mx-auto">
           <form className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
             <div className="mb-4">
-              <label
-                className="block text-gray-700 text-sm font-bold mb-2"
-                htmlFor="name"
-              >
+              <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="name">
                 Nom
               </label>
               <input
@@ -130,13 +120,11 @@ export default function Home() {
                 id="name"
                 type="text"
                 placeholder="Nom"
+                value={curentUpdateId && products.find((product) => product.id === curentUpdateId).name}
               />
             </div>
             <div className="mb-4">
-              <label
-                className="block text-gray-700 text-sm font-bold mb-2"
-                htmlFor="quantity"
-              >
+              <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="quantity">
                 Quantité
               </label>
               <input
@@ -144,13 +132,11 @@ export default function Home() {
                 id="quantity"
                 type="number"
                 placeholder="Quantité"
+                value={curentUpdateId && products.find((product) => product.id === curentUpdateId).quantity}
               />
             </div>
             <div className="mb-4">
-              <label
-                className="block text-gray-700 text-sm font-bold mb-2"
-                htmlFor="price"
-              >
+              <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="price">
                 Prix
               </label>
               <input
@@ -158,18 +144,23 @@ export default function Home() {
                 id="price"
                 type="number"
                 placeholder="Prix"
+                value={curentUpdateId && products.find((product) => product.id === curentUpdateId).price}
               />
             </div>
             <div className="flex items-center justify-center">
               <button
-                className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mr-1"
+                className={`${
+                  curentUpdateId ? "bg-blue-500 hover:bg-blue-700" : "bg-green-500 hover:bg-green-700"
+                } text-white font-bold py-2 px-4 rounded mr-1`}
                 type="submit"
                 onClick={(e) => {
                   e.preventDefault();
-                  addProduct();
+                  curentUpdateId ? updateProduct(dbInstance, curentUpdateId) : addProduct(); // TODO: check if update
+                  curentUpdateId && setCurentUpdateId(null);
+                  setVisible(false);
                 }}
               >
-                Ajouter
+                {curentUpdateId ? "Modifier" : "Ajouter"}
               </button>
             </div>
           </form>
