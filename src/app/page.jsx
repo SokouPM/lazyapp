@@ -1,8 +1,13 @@
 "use client";
 
 import { app, database } from "../../firebaseConfig";
-import { getApp } from "firebase/app";
-import { collection, addDoc, getDocs } from "firebase/firestore";
+import {
+  collection,
+  addDoc,
+  getDocs,
+  deleteDoc,
+  doc,
+} from "firebase/firestore";
 import { useState, useEffect } from "react";
 
 const dbInstance = collection(database, "products");
@@ -15,6 +20,29 @@ const getProducts = async (setProducts) => {
     }));
     setProducts(elements);
   });
+};
+
+const addProduct = async () => {
+  const name = document.getElementById("name").value;
+  const quantity = document.getElementById("quantity").value;
+  const price = document.getElementById("price").value;
+
+  const product = {
+    name,
+    quantity,
+    price,
+  };
+
+  await addDoc(dbInstance, product);
+};
+
+const deleteProducts = async (dbInstance, id) => {
+  await deleteDoc(doc(dbInstance, id));
+};
+
+const updateProduct = async (dbInstance, id) => {
+  console.log("id :>> ", id);
+  // await updateDoc(doc(dbInstance, id));
 };
 
 export default function Home() {
@@ -56,7 +84,10 @@ export default function Home() {
                   <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-1">
                     Modifier
                   </button>
-                  <button className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+                  <button
+                    className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+                    onClick={() => deleteProducts(dbInstance, product.id)}
+                  >
                     Supprimer
                   </button>
                 </span>
@@ -132,8 +163,11 @@ export default function Home() {
             <div className="flex items-center justify-center">
               <button
                 className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mr-1"
-                type="button"
-                onClick={() => console.log("TODO")}
+                type="submit"
+                onClick={(e) => {
+                  e.preventDefault();
+                  addProduct();
+                }}
               >
                 Ajouter
               </button>
