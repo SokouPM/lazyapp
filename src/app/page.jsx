@@ -12,46 +12,49 @@ import { useState, useEffect } from "react";
 
 const dbInstance = collection(database, "products");
 
-const getProducts = async (setProducts) => {
-  getDocs(dbInstance).then((querySnapshot) => {
-    const elements = querySnapshot.docs.map((doc) => ({
-      ...doc.data(),
-      id: doc.id,
-    }));
-    setProducts(elements);
-  });
-};
-
-const addProduct = async () => {
-  const name = document.getElementById("name").value;
-  const quantity = document.getElementById("quantity").value;
-  const price = document.getElementById("price").value;
-
-  const product = {
-    name,
-    quantity,
-    price,
-  };
-
-  await addDoc(dbInstance, product);
-};
-
-const deleteProducts = async (dbInstance, id) => {
-  await deleteDoc(doc(dbInstance, id));
-};
-
-const updateProduct = async (dbInstance, id) => {
-  console.log("id :>> ", id);
-  // await updateDoc(doc(dbInstance, id));
-};
-
-export default function Home() {
+const Home = () => {
   const [visible, setVisible] = useState(false);
   const [products, setProducts] = useState([]);
 
   useEffect(() => {
-    getProducts(setProducts);
+    getProducts();
   }, []);
+
+  const getProducts = async () => {
+    getDocs(dbInstance).then((querySnapshot) => {
+      const elements = querySnapshot.docs.map((doc) => ({
+        ...doc.data(),
+        id: doc.id,
+      }));
+      setProducts(elements);
+    });
+  };
+
+  const addProduct = async () => {
+    const name = document.getElementById("name").value;
+    const quantity = document.getElementById("quantity").value;
+    const price = document.getElementById("price").value;
+
+    const product = {
+      name,
+      quantity,
+      price,
+    };
+
+    await addDoc(dbInstance, product).then((docRef) => {
+      product.id = docRef.id;
+      setProducts([...products, product]);
+    });
+  };
+
+  const deleteProducts = async (dbInstance, id) => {
+    await deleteDoc(doc(dbInstance, id));
+  };
+
+  const updateProduct = async (dbInstance, id) => {
+    console.log("id :>> ", id);
+    await updateDoc(doc(dbInstance, id));
+  };
 
   return (
     <main>
@@ -81,7 +84,10 @@ export default function Home() {
               </td>
               <td className="border border-black">
                 <span className="w-max flex">
-                  <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-1">
+                  <button
+                    className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-1"
+                    onClick={() => updateProduct(dbInstance, product.id)}
+                  >
                     Modifier
                   </button>
                   <button
@@ -177,4 +183,6 @@ export default function Home() {
       )}
     </main>
   );
-}
+};
+
+export default Home;
